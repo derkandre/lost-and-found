@@ -3,6 +3,8 @@
 require '../database/connection.php';
 include '../security/encryption.php';
 
+$successMsg = $errorMsg = "";
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = $_POST["username"];
     $password = $_POST["password"];
@@ -17,15 +19,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($result->num_rows > 0) {
         $data = $result->fetch_assoc();
         $passwordMatch = password_verify($password, $data["password"]);
-        
+
         if ($passwordMatch) {
             session_start();
 
             $_SESSION["user_id"] = encryptData($data["user_id"]);
-            header("Location: index.php?session=" . encryptData(strval($data["user_id"])));
+            header("Location: index.php");
         } else {
-            echo "Invalid username or password";
+            $errorMsg = "Incorrect username or password!";
         }
+    }
+}
+
+if (isset($_GET["ref"])) {
+    if ($_GET["ref"] === "logout") {
+        $successMsg = "You have been logged out successfully!";
     }
 }
 
@@ -37,6 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>ICTS LostTrack | Log In</title>
     <link rel="stylesheet" href="../styles/style.css">
     <link rel="stylesheet" href="../styles/remixicon.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
 <body>
@@ -58,6 +67,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <input type="password" id="password" name="password" maxlength="32" required>
             </div>
             <button type="submit">Login</button>
+            <p class="form-additional-links"><a class="form-additional-links" href="../error/401.php?ref=login">Forgot
+                    Password</a> |
+                <a class="form-additional-links" href="signup.php">Register</a>
+            </p>
+            <?php if (!empty($successMsg)): ?>
+                <span class="success-message"><?php echo $successMsg; ?></span>
+            <?php endif; ?>
+
+            <?php if (!empty($errorMsg)): ?>
+                <span class="error-message"><?php echo $errorMsg; ?></span>
+            <?php endif; ?>
         </form>
     </div>
 </body>
