@@ -1,5 +1,6 @@
 <?php
 
+// Without using ENV variables since we haven't tackled it yet.
 $hostname = "localhost";
 $username = $password = "root";
 $dbname = "lostfounddb";

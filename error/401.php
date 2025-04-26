@@ -6,7 +6,7 @@
     <meta http-equiv="refresh" content="3;url=<?php echo isset($_GET['ref']) && $_GET['ref'] == 'login' ? '../admin/login.php' : '../'; ?>" />
 </head>
 
-<body>
+<body class="non-admin-body">
     <div class="container">
         <h1 class="error-page-danger">ERROR 401 | Unauthorized</h1>
 

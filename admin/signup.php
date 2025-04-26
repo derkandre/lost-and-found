@@ -1,5 +1,7 @@
 <?php
 
+// At the meantime, this page will stay, users can register but must be verified first by admin if is 
+// indeed a bonafide student.
 require '../database/connection.php';
 include '../security/encryption.php';
 
