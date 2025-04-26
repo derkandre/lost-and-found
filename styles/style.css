@@ -1,3 +1,4 @@
+/* START of the styles for ICONS */
 @font-face {
     font-family: "Poppins";
     src: url("../assets/fonts/Poppins-Regular.ttf") format("truetype");
@@ -7,6 +8,7 @@
     font-family: "Remixicon";
     src: url("../assets/fonts/remixicon.ttf") format("truetype");
 }
+/* END of the styles for ICONS */
 
 * {
     margin: 0;
@@ -16,20 +18,27 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
     background: linear-gradient(to bottom, #060e4d, #030729);
     display: flex;
+}
+
+.non-admin-body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     padding: 20px;
     color: #fff;
-    -webkit-text-size-adjust: 100%;
-    -webkit-font-smoothing: antialiased;
 }
 
-.container-solid,
-.container-dashed {
+.admin-body {
+    justify-content: center;
+    align-items: top;
+    min-height: 100vh;
+    padding: 20px;
+    color: #fff;
+}
+
+.container-solid {
     width: 100%;
     max-width: 350px;
     background: #fff;
@@ -68,6 +77,8 @@ header p {
     font-weight: bold;
 }
 
+/* Start of the styles for the forms */ 
+
 form {
     display: flex;
     flex-direction: column;
@@ -81,7 +92,7 @@ form textarea {
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 5px;
-    font-size: 16px; 
+    font-size: 16px;
     width: 100%;
     max-width: 350px;
     appearance: none;
@@ -115,9 +126,8 @@ form button {
     cursor: pointer;
     font-size: 18px;
     font-weight: bold;
-    transition: background-color 0.4s, border-color 0.4s;
+    transition: background-color 0.4s;
     min-height: 44px;
-    -webkit-tap-highlight-color: transparent;
 }
 
 form button:hover {
@@ -156,6 +166,30 @@ form button:hover {
     transition: color 0.4s ease;
 }
 
+.grouped-inputs {
+    display: flex; 
+    gap: 10px;
+}
+
+/* START for the styles of TABLES */
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 2px solid white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th, td {
+    border: 1px solid white; 
+    padding: 10px;
+    color: white;
+}
+
+/* ===== END for the styles of my TABLES ==== */
+
+/* START for the styles of my MESSAGES */
 .error-message,
 .success-message {
     padding: 10px;
@@ -168,31 +202,19 @@ form button:hover {
     color: #d4392e;
 }
 
-.warning-message {
-    color: #f59c1f;
-}
-
 .success-message {
     background: #d4edda;
     color: #2cb14b;
 }
 
-.error-page-warning {
-    color: #f59c1f;
-}
-
-.warning-highlight {
-    background-color: #f59c1f;
+.error-highlight {
+    background-color: #d4392e;
     color: black;
     padding: 0 5px;
 }
 
-.error-page-danger {
-    color: #d4392e;
-}
-
-.error-highlight {
-    background-color: #d4392e;
+.warning-highlight {
+    background-color: #f59c1f;
     color: black;
     padding: 0 5px;
 }
@@ -203,11 +225,38 @@ form button:hover {
     padding: 0 5px;
 }
 
-.admin-layout {
-    display: flex;
-    min-height: 100vh;
+.warning-button {
+    background-color: #f59c1f;
+    border-radius: 6px;
+    color: black;
+    text-align: center;
+    padding: 4px 4px 4px 8px;
+    margin: 0 4px;
+    text-decoration: none;
 }
 
+.danger-button {
+    background-color: #d4392e;
+    border-radius: 6px;
+    color: white;
+    padding: 4px 8px 4px 6px;
+    margin: 0 4px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.secondary-button {
+    background-color: #ccc;
+    border-radius: 6px;
+    color: #060e4d;
+    padding: 6px;
+    margin: 0 4px;
+    text-align: center;
+    text-decoration: none;
+}
+/* END of the styles for MESSAGES */
+
+/* START of the styles for the SIDEBAR */
 .sidebar-toggle-checkbox {
     display: none;
 }
@@ -222,7 +271,6 @@ form button:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
     z-index: 100;
 }
 
@@ -239,22 +287,21 @@ form button:hover {
     background: #060e4d;
     border-radius: 50%;
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     margin-right: 10px;
 }
 
 .sidebar-header .logo i {
     color: #fff;
-    font-size: 16px;
 }
 
 .sidebar-header h3 {
     font-size: 16px;
     font-weight: 600;
     color: #060e4d;
-    margin: 0;
     flex-grow: 1;
+    margin: 0;
 }
 
 .sidebar-toggle-label {
@@ -264,7 +311,6 @@ form button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
 }
 
 .sidebar-toggle-label:hover {
@@ -277,10 +323,6 @@ form button:hover {
     margin: 0;
     flex-grow: 1;
     overflow-y: auto;
-}
-
-.sidebar-menu li {
-    margin: 2px 0;
 }
 
 .sidebar-menu li a {
@@ -296,7 +338,6 @@ form button:hover {
     font-size: 18px;
     margin-right: 10px;
     min-width: 20px;
-    text-align: center;
 }
 
 .sidebar-menu li a:hover {
@@ -307,7 +348,6 @@ form button:hover {
 .sidebar-menu li.active a {
     background: rgba(6, 14, 77, 0.08);
     color: #060e4d;
-    border-left: 3px solid #f59c1f;
 }
 
 .sidebar-menu li.logout a {
@@ -321,105 +361,145 @@ form button:hover {
     color: #888;
     border-top: 1px solid #f0f0f0;
 }
+/* END of the styles for the SIDEBAR */
 
+
+/* For a grid-like based system like .NET WPF's designer, which 
+    I am more familiar and comfortable with 
+    
+    TO-DO: Make everything consistent using this card-based design.
+           Remove unnecessary stylings and use this design system
+    */
 .main-content {
     margin-left: 250px;
     padding: 20px;
     width: calc(100% - 250px);
     transition: all 0.3s ease;
+    color: #030729;
+    border-radius: 8px;
+}
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.col-full { flex: 1 0 100%; }
+.col-half { flex: 1 0 calc(50% - 10px); }
+.col-third { flex: 1 0 calc(33.333% - 14px); }
+.col-two-thirds { flex: 2 0 calc(66.666% - 7px); }
+.col-quarter { flex: 1 0 calc(25% - 15px); }
+
+.card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.card-header h2, 
+.card-header h3 {
+    margin: 0;
+    color: #060e4d;
+    font-size: 1.25rem;
+}
+
+.card-body {
+    flex: 1;
+}
+
+.card-tall {
+    min-height: 250px;
+}
+
+.card-short {
+    min-height: 120px;
+}
+
+@media (max-width: 992px) {
+    .row {
+        flex-wrap: wrap;
+    }
+    
+    .col-half, 
+    .col-third, 
+    .col-two-thirds {
+        flex: 1 0 calc(50% - 10px);
+    }
 }
 
 @media (max-width: 768px) {
     .sidebar {
         width: 60px;
     }
-    
-    .sidebar-header h3 {
-        display: none;
-    }
-    
-    .sidebar-menu li a span {
-        display: none;
-    }
-    
+
+    .sidebar-header h3,
+    .sidebar-menu li a span,
     .sidebar-footer {
         display: none;
     }
-    
+
     .main-content {
         margin-left: 60px;
         width: calc(100% - 60px);
     }
-    
+
     .sidebar-toggle-checkbox:checked ~ .sidebar {
         width: 250px;
     }
-    
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-header h3 {
+
+    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-header h3,
+    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-menu li a span,
+    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-footer {
         display: block;
     }
-    
+
     .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-menu li a span {
         display: inline;
     }
     
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-footer {
-        display: block;
-    }
-    
-    .container-solid,
-    .container-dashed {
-        padding: 20px 15px;
-        margin: 0 10px;
-    }
-
-    header h1 {
-        font-size: 1.8rem;
-    }
-
-    .logo-title {
-        flex-direction: row;
-        align-items: center;
-        padding: 8px;
-        width: 100%;
-    }
-
-    .logo-title h2 {
-        font-size: 1.5rem;
-    }
-
-    form {
-        width: 100%;
-        align-items: center;
-        gap: 15px;
-    }
-
+    form,
     form input,
     form select,
-    form textarea {
+    form textarea,
+    .input-container {
         width: 100%;
-        max-width: 100%;
-        font-size: 16px;
-    }
-
-    form label,
-    form h2 {
         max-width: 100%;
     }
 
     form button {
         width: 100%;
-        padding: 12px;
-        min-height: 44px;
     }
 
-    .input-container {
-        width: 100%;
-    }
-
-    .error-message,
-    .success-message {
-        max-width: 100%;
+    .col-half, 
+    .col-third, 
+    .col-two-thirds,
+    .col-quarter {
+        flex: 1 0 100%;
     }
 }
 
@@ -428,16 +508,11 @@ form button:hover {
         padding: 10px;
     }
 
-    .container-solid,
-    .container-dashed {
+    .container-solid {
         padding: 15px 10px;
     }
 
     header h1 {
         font-size: 1.5rem;
-    }
-
-    form {
-        gap: 12px;
     }
 }

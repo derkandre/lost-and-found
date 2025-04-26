@@ -5,7 +5,24 @@ include '../security/encryption.php';
 
 $successMsg = $errorMsg = "";
 
+session_start();
+
+// Using session fixed where the logout message doesn't clear afterwards.
+// Previously, I only used the variable but it had a problem, yeah variables reset
+// if I force refresh the page without the ?ref parameter in the URL.
+if (isset($_SESSION['success_msg'])) {
+    $successMsg = $_SESSION['success_msg'];
+    unset($_SESSION['success_msg']);
+}
+
+if (isset($_SESSION['error_msg'])) {
+    $errorMsg = $_SESSION['error_msg'];
+    unset($_SESSION['error_msg']);
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $successMsg = "";
+
     $username = $_POST["username"];
     $password = $_POST["password"];
 
@@ -21,22 +38,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $passwordMatch = password_verify($password, $data["password"]);
 
         if ($passwordMatch) {
-            session_start();
-
             $_SESSION["user_id"] = encryptData($data["user_id"]);
             header("Location: index.php");
         } else {
-            $errorMsg = "Incorrect username or password!";
+            $_SESSION['error_msg'] = "Incorrect username or password!";
+            header("Location: index.php");
         }
+    } else {
+        $_SESSION['error_msg'] = "Incorrect username or password!";
+        // This fixed my problem where the message does not show the first time I try to enter 
+        // an incorrect username/password. The message won't take effect unless reloaded due
+        // to how session works.
+        header("Location: login.php");
     }
 }
 
-if (isset($_GET["ref"])) {
-    if ($_GET["ref"] === "logout") {
-        $successMsg = "You have been logged out successfully!";
-    }
+if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
+    $_SESSION['success_msg'] = "You have been logged out successfully!";
+    header("Location: login.php");
+    exit;
 }
-
 ?>
 
 <html>
@@ -48,7 +69,7 @@ if (isset($_GET["ref"])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body>
+<body class="non-admin-body">
     <div class="container-solid">
         <form action="" method="POST">
             <div class="logo-title">

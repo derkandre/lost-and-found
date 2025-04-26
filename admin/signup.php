@@ -32,7 +32,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
-<body>
+<body class="non-admin-body">
     <div class="container-solid">
         <form action="" method="POST">
             <div class="logo-title">
