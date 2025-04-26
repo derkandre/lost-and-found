@@ -38,7 +38,8 @@ if (isset($_GET["action"])) {
             header("Location: accounts.php?action=delete&result=success");
             exit();
         } else {
-            echo "Error deleting user with ID: " . htmlspecialchars($id);
+            echo "Error deleting user with ID: " . htmlspecialchars($id) . "<br>The ID may have become invalid or corrupted.<br>Full Error Details: " 
+            . $studentStmt->error AND $userStmt->error;
         }
     } else {
         echo "Invalid action specified.";

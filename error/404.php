@@ -5,7 +5,7 @@
     </head>
 
     <body>
-        <div class="container">
+        <div class="non-admin-body">
             <h1 class="error-page-warning">ERROR 404 | Does Not Exist</h1>
             <p>The page you are trying to access may have been moved or no longer exists.</p>
             <p>Go back to <a class="warning-highlight" href="../">homepage</a>.</p>
