@@ -34,12 +34,12 @@ if (isset($_GET["action"])) {
         $userStmt->bind_param("i", $id);
         $userStmt->execute();
         
-        if ($studentStmt->affected_rows >= 0 && $userStmt->affected_rows > 0) {
+        if ($studentStmt->affected_rows > 0 && $userStmt->affected_rows > 0) {
             header("Location: accounts.php?action=delete&result=success");
             exit();
         } else {
             echo "Error deleting user with ID: " . htmlspecialchars($id) . "<br>The ID may have become invalid or corrupted.<br>Full Error Details: " 
-            . $studentStmt->error AND $userStmt->error;
+            . $studentStmt->error . "AND" . $userStmt->error;
         }
     } else {
         echo "Invalid action specified.";

@@ -62,6 +62,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         header("Location: new-account.php");
         exit();
     }
+
+    if (doesStudentIDExist($conn, $student_id)) {
+        $_SESSION['error_msg'] = "Email is already registered with an account.";
+        header("Location: new-account.php");
+        exit();
+    }
     // For all fields to not be empty
     if (
         empty($username) || empty($password) || $role == "none" || empty($student_id) ||
@@ -178,14 +184,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $_SESSION["success_msg"] = "User has been registered successfully!";
         } else {
-            $_SESSION["success_msg"] = "Failed to register user.";
+            // This will remain as is until I can get an A-OK from my instructor to use transactions
+            // But this seems like good already but afaik using transactions can simplify this?
+            $deleteUserQuery = "DELETE FROM users WHERE user_id = ?";
+            $deleteUserStmt = $conn->prepare($deleteUserQuery);
+            $deleteUserStmt->bind_param("i", $user_id);
+
+            if ($deleteUserStmt->execute() && $deleteUserStmt->affected_rows > 0) {
+                $_SESSION["error_msg"] = "Registration failed, but system successfully rolled back.";
+            } else {
+                $_SESSION["error_msg"] = "Registration failed and could not rollback corrupted registration. Please contact administrator.";
+            }
         }
 
         header("Location: new-account.php");
-
+        exit();
     } else {
-        $_SESSION["success_msg"] = "Failed to register user.";
-        header("Location: new-account.php");
+        $_SESSION["error_msg"] = "Failed to register user: " . $userStmt->error;
+        header(header: "Location: new-account.php");
+        exit();
     }
 }
 
@@ -277,8 +294,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="input-container">
                     <i class="ri-phone-line input-icon"></i>
                     <input type="text" name="contact" value="<?php if (!empty($_SESSION["contact-input"]))
-                        echo htmlspecialchars($_SESSION["contact-input"]); ?>" placeholder="Contact Number"
-                        required>
+                        echo htmlspecialchars($_SESSION["contact-input"]); ?>" placeholder="Contact Number" required>
                 </div>
             </div>
 

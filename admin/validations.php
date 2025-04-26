@@ -22,4 +22,15 @@ function doesEmailExist($conn, $email) {
     return ($result->num_rows > 0) ? true : false;
 }
 
+function doesStudentIDExist($conn, $studentID) {
+    $query = "SELECT * FROM students WHERE student_id = ?";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $studentID);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    return ($result->num_rows > 0) ? true : false;
+}
+
 ?>
