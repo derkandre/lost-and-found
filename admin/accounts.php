@@ -77,8 +77,8 @@ if (isset($_GET["action"]) && isset($_GET["result"])) {
 
                 if ($result->num_rows > 0) {
                     while ($data = $result->fetch_assoc()) {
-                        $full_name = "{$data['first_name']} {$data['middle_name']} {$data['last_name']}";
                         $id = $data['user_id'];
+                        $full_name = getNameOfUser($id, $conn);
 
                         echo "<tr>";
                         echo "<td style='text-align: center;'>$id</td>";

@@ -1,4 +1,260 @@
 <?php
+require '../database/connection.php';
+include '../security/encryption.php';
+include 'validations.php';
+include 'session-details.php';
 
+session_start();
 
+if (!isset($_SESSION["user_id"])) {
+    header("Location: ../error/401.php?ref=login");
+    exit();
+}
+
+$successMsg = $errorMsg = "";
+if (isset($_SESSION['success_msg'])) {
+    $successMsg = $_SESSION['success_msg'];
+    unset($_SESSION['success_msg']);
+}
+if (isset($_SESSION['error_msg'])) {
+    $errorMsg = $_SESSION['error_msg'];
+    unset($_SESSION['error_msg']);
+}
+
+if (isset($_GET["id"])) {
+    $encryptedId = $_GET["id"];
+    $decryptedId = decryptData($encryptedId);
+
+    $query = "SELECT u.user_id, u.username, u.role, s.student_id, s.first_name, s.middle_name, s.last_name, s.email, s.contact
+              FROM users u 
+              JOIN students s ON u.user_id = s.user_id
+              WHERE u.user_id = ? AND s.user_id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("ii", $decryptedId, $decryptedId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($result->num_rows > 0) {
+        $data = $result->fetch_assoc();
+        $userID = $data["user_id"];
+        $username = $data["username"];
+        $first_name = $data["first_name"];
+        $middle_name = $data["middle_name"];
+        $last_name = $data["last_name"];
+        $role = $data["role"];
+        $student_id = $data["student_id"];
+        $email = $data["email"];
+        $contact = $data["contact"];
+    } else {
+        $_SESSION["error_msg"] = "Could not load student information or no records found.";
+        header("Location: new-account.php");
+        exit();
+    }
+    if (empty($student_id)) {
+        $_SESSION["error_msg"] = "Invalid or corrupted ID. Please try again or contact administrator.";
+        header("Location: new-account.php");
+        exit();
+    }
+} else {
+    $_SESSION["error_msg"] = "Invalid or corrupted ID. Please try again or contact administrator.";
+    header("Location: new-account.php");
+    exit();
+}
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_GET["id"])) {
+        $userID = decryptData($_GET["id"]);
+    } elseif (isset($_POST["id"])) {
+        $userID = decryptData($_POST["id"]);
+    }
+
+    $username = trim($_POST["username"]);
+    $password = trim($_POST["password"]);
+    $role = trim($_POST["role"]);
+    $studentID = trim($_POST["student-id"]);
+    $first_name = trim($_POST["first-name"]);
+
+    if (isset($_POST['no-middle-name-checkbox']) && $_POST['no-middle-name-checkbox'] === 'N/A') {
+        $middle_name = "N/A";
+    } else {
+        if (strtoupper($_POST["middle-name"]) == "N/A")
+            $middle_name = "N/A";
+        else
+            $middle_name = ucwords(strtolower(trim($_POST["middle-name"])));
+    }
+
+    $last_name = trim($_POST["last-name"]);
+    $email = trim($_POST["email"]);
+    $contact = trim($_POST["contact"]);
+
+    $first_name = ucwords(strtolower($first_name));
+    $last_name = ucwords(strtolower($last_name));
+
+    $oldUsername = trim(getUsername($userID, $conn));
+    $oldStudentID = trim(getStudentID($userID, $conn));
+    $oldEmail = trim(getUserEmail($userID, $conn));
+
+    // Fixed the issue where this still runs even tho the username remains unchanged
+    // simply because I decrypted the ID in the function as it's already decrypted pala dri.
+    if ($username != $oldUsername) {
+        if (doesUsernameExist($conn, $username)) {
+            $_SESSION['error_msg'] = "Username is already taken.";
+            header("Location: edit.php?id=" . encryptData($userID));
+            exit();
+        }
+    }
+    if ($studentID != $oldStudentID) {
+        if (doesStudentIDExist($conn, $studentID)) {
+            $_SESSION['error_msg'] = "Student ID is already associated with an account.";
+            header("Location: edit.php?id=" . encryptData($userID));
+            exit();
+        }
+    }
+    if ($email != $oldEmail) {
+        if (doesEmailExist($conn, $email)) {
+            $_SESSION['error_msg'] = "Email is already registered with an account.";
+            header("Location: edit.php?id=" . encryptData($userID));
+            exit();
+        }
+    }
+
+    validateEditedInputs($username, $password, $role, $studentID, $first_name, $middle_name, $last_name, $email, $contact);
+
+    if (!empty($password)) {
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        $updateUserQuery = "UPDATE users SET username = ?, password = ?, role = ? WHERE user_id = ?";
+        $updateUserStmt = $conn->prepare($updateUserQuery);
+        $updateUserStmt->bind_param("sssi", $username, $hashedPassword, $role, $userID);
+    } else {
+        $updateUserQuery = "UPDATE users SET username = ?, role = ? WHERE user_id = ?";
+        $updateUserStmt = $conn->prepare($updateUserQuery);
+        $updateUserStmt->bind_param("ssi", $username, $role, $userID);
+    }
+
+    if ($updateUserStmt->execute()) {
+        $updateStudentQuery = "UPDATE students SET student_id = ?, first_name = ?, middle_name = ?, last_name = ?, email = ?, contact = ? WHERE user_id = ?";
+        $updateStudentStmt = $conn->prepare($updateStudentQuery);
+        $updateStudentStmt->bind_param("ssssssi", $studentID, $first_name, $middle_name, $last_name, $email, $contact, $userID);
+
+        if ($updateStudentStmt->execute()) {
+            if ($updateStudentStmt->affected_rows > 0) {
+                $_SESSION["success_msg"] = "User credentials and student details updated successfully!";
+            } else {
+                $_SESSION["success_msg"] = "User credentials updated but no changes detected in student details.";
+            }
+        } else {
+            $_SESSION["error_msg"] = "Student update failed: " . $updateStudentStmt->error;
+        }
+    } else {
+        $_SESSION["error_msg"] = "User update failed: " . $updateUserStmt->error;
+    }
+
+    header("Location: edit.php?id=" . encryptData($userID));
+    exit();
+}
 ?>
+
+<html>
+
+<head>
+    <title>LostTrack | Edit User</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/remixicon.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body class="non-admin-body">
+    <?php require 'sidebar.php'; ?>
+    <div class="main-content" style="background-color: #fff; border-radius: 8px;">
+        <form action="edit.php?id=<?php echo $_GET['id']; ?>" method="POST">
+            <div class="logo-title">
+                <img src="../assets/images/ccsitlogo.png" width="50px" height="50px">
+                <h2>EDIT</h2>
+            </div>
+
+            <hr>
+
+            <label>Credentials</label>
+            <div class="grouped-inputs">
+                <div class="input-container">
+                    <i class="ri-user-fill input-icon"></i>
+                    <input type="text" name="username" placeholder="Username"
+                        value="<?php echo htmlspecialchars($username); ?>" maxlength="32" required>
+                </div>
+                <div class="input-container">
+                    <i class="ri-lock-password-fill input-icon"></i>
+                    <input type="password" name="password" placeholder="Enter new password" maxlength="32">
+                </div>
+                <div class="input-container">
+                    <i class="ri-shield-fill input-icon"></i>
+                    <select style="height: 46px; padding-left: 40px;" name="role">
+                        <option value="none" disabled hidden>Select Role</option>
+                        <option value="user" <?php if ($role == "user")
+                            echo "selected"; ?>>User</option>
+                        <option value="admin" <?php if ($role == "admin")
+                            echo "selected"; ?>>Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr>
+
+            <label>Student ID</label>
+            <div class="input-container">
+                <i class="ri-id-card-line input-icon"></i>
+                <input type="text" name="student-id" placeholder="ID Number"
+                    value="<?php echo htmlspecialchars($student_id); ?>" required>
+            </div>
+            <label>Full Name</label>
+            <div class="grouped-inputs">
+                <div class="input-container">
+                    <i class="ri-user-smile-line input-icon"></i>
+                    <input type="text" name="first-name" value="<?php echo htmlspecialchars($first_name); ?>"
+                        placeholder="First" required>
+                </div>
+                <div class="input-container">
+                    <i class="ri-user-smile-line input-icon"></i>
+                    <input type="text" name="middle-name" value="<?php echo htmlspecialchars($middle_name); ?>"
+                        placeholder="Middle">
+                </div>
+                <div class="input-container">
+                    <i class="ri-user-smile-line input-icon"></i>
+                    <input type="text" name="last-name" value="<?php echo htmlspecialchars($last_name); ?>"
+                        placeholder="Last" required>
+                </div>
+            </div>
+
+            <div class="input-container" style="padding-left: 5px; margin-top: -10px;">
+                <input type="checkbox" name="no-middle-name-checkbox" id="no-middle-name-checkbox" value="N/A">
+                <label style="padding-left: 6px; color: gray; font-weight: normal;" for="no-middle-name-checkbox">No
+                    Middle Name</label>
+            </div>
+
+            <label>Contact information</label>
+            <div class="grouped-inputs">
+                <div class="input-container">
+                    <i class="ri-mail-line input-icon"></i>
+                    <input type="text" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="Email"
+                        required>
+                </div>
+                <div class="input-container">
+                    <i class="ri-phone-line input-icon"></i>
+                    <input type="text" name="contact" value="<?php echo htmlspecialchars($contact); ?>"
+                        placeholder="Contact Number" required>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <?php if (!empty($successMsg)): ?>
+                    <span class="success-message"><?php echo htmlspecialchars($successMsg); ?></span>
+                <?php endif; ?>
+                <?php if (!empty($errorMsg)): ?>
+                    <span class="error-message"><?php echo htmlspecialchars($errorMsg); ?></span>
+                <?php endif; ?>
+            </div>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+
+</html>

@@ -86,7 +86,7 @@ form {
     color: #060e4d;
 }
 
-form input,
+form input:not([type="checkbox"]),
 form select,
 form textarea {
     padding: 10px;
@@ -96,6 +96,10 @@ form textarea {
     width: 100%;
     max-width: 350px;
     appearance: none;
+}
+
+form input[type="checkbox"] {
+    transform: scale(1.5);
 }
 
 form input:focus,
@@ -148,7 +152,7 @@ form button:hover {
     margin-bottom: 5px;
 }
 
-.input-container input {
+.input-container input:not([type="checkbox"]) {
     padding-left: 40px;
 }
 

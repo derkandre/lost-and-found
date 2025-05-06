@@ -1,6 +1,5 @@
 <?php
 require '../database/connection.php';
-include '../security/encryption.php';
 include 'validations.php';
 
 session_start();
@@ -27,13 +26,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $role = trim(string: $_POST["role"]);
     $student_id = trim($_POST["student-id"]);
     $first_name = trim($_POST["first-name"]);
-    $middle_name = trim($_POST["middle-name"]);
+
+    if (isset($_POST['no-middle-name-checkbox']) && $_POST['no-middle-name-checkbox'] === 'N/A') {
+        $middle_name = strtoupper("N/A");
+    } else {
+        $middle_name = trim($_POST["middle-name"]);
+        $middle_name = ucwords(string: strtolower($middle_name));
+    }    
+    
     $last_name = trim($_POST["last-name"]);
     $email = trim($_POST["email"]);
     $contact = trim($_POST["contact"]);
 
     $first_name = ucwords(strtolower($first_name));
-    $middle_name = ucwords(strtolower($middle_name));
     $last_name = ucwords(strtolower($last_name));
 
     // I'm still conflicted whether to store emails in all lowercase or remain case-sensitive based on actual input.
@@ -50,9 +55,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $_SESSION["email-input"] = $email;
     $_SESSION["contact-input"] = $contact;
 
-    // Start of validations
     if (doesUsernameExist($conn, $username)) {
         $_SESSION['error_msg'] = "Username is already taken.";
+        header("Location: new-account.php");
+        exit();
+    }
+
+    if (doesStudentIDExist($conn, $student_id)) {
+        $_SESSION['error_msg'] = "Student ID is already associated with an account.";
         header("Location: new-account.php");
         exit();
     }
@@ -63,98 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 
-    if (doesStudentIDExist($conn, $student_id)) {
-        $_SESSION['error_msg'] = "Email is already registered with an account.";
-        header("Location: new-account.php");
-        exit();
-    }
-    // For all fields to not be empty
-    if (
-        empty($username) || empty($password) || $role == "none" || empty($student_id) ||
-        empty($first_name) || empty($middle_name) || empty($last_name) ||
-        empty($email) || empty($contact)
-    ) {
-        $_SESSION['error_msg'] = "All fields are required. Please leave no field blank.";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For USERNAME validation
-    if (strlen($username) < 4 || !preg_match("/^[a-zA-Z0-9]+$/", $username)) {
-        $_SESSION['error_msg'] = "Username must only be alphanumeric and be at least 4 characters long";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For PASSWORD validation
-    if (strlen($password) < 8) {
-        $_SESSION['error_msg'] = "Password must be at least 8 characters long!";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    if (!preg_match('/[a-z]/', $password)) {
-        $_SESSION['error_msg'] = "Password must contain at least 1 lowercase letter!";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    if (!preg_match('/[A-Z]/', $password)) {
-        $_SESSION['error_msg'] = "Password must contain at least 1 uppercase letter!";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    if (!preg_match('/[0-9]/', $password)) {
-        $_SESSION['error_msg'] = "Password must contain at least 1 number!";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    if (!preg_match('/[^A-Za-z0-9]/', $password)) {
-        $_SESSION['error_msg'] = "Password must contain at least 1 special character";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For the STUDENT ID validation
-    if (!preg_match("/\b\d{7}-(1|2)\b/", $student_id)) {
-        $_SESSION['error_msg'] = "Student ID must follow official format: XXXXXXX-S where X is 0-9 and S is either 1 or 2.";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For the NAME validation
-    if (
-        !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $first_name) ||
-        !preg_match('/^[a-zA-Z\s\-]{1,50}$/', $middle_name) ||
-        !preg_match('/^[a-zA-Z\s\-]{2,50}$/', $last_name)
-    ) {
-        $_SESSION['error_msg'] = "Names must contain only letters, spaces, and hyphens";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For the EMAIL validation
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $_SESSION['error_msg'] = "Please enter a valid email address";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For CONTACT NO. validation
-    if (!preg_match('/^(\+639\d{9}|09\d{9})$/', $contact)) {
-        $_SESSION['error_msg'] = "Contact number must follow Philippine format: +639XXXXXXXXX or 09XXXXXXXXX";
-        header("Location: new-account.php");
-        exit();
-    }
-
-    // For the ROLE, just in case tho, even if the options of the dropdown is only Admin and User
-    if (strtolower($role) != "user" && strtolower($role) != "admin") {
-        $_SESSION['error_msg'] = "The role must only either be User or Admin.";
-        header("Location: new-account.php");
-        exit();
-    }
+    validateAllFieldInputs($username, $password, $role, $student_id, $first_name, $middle_name, $last_name, $email, $contact);
 
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
@@ -274,13 +193,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="input-container">
                     <i class="ri-user-smile-line input-icon"></i>
                     <input type="text" name="middle-name" value="<?php if (!empty($_SESSION["middle-name-input"]))
-                        echo htmlspecialchars($_SESSION["middle-name-input"]); ?>" placeholder="Middle" required>
+                        echo htmlspecialchars($_SESSION["middle-name-input"]); ?>" placeholder="Middle">
                 </div>
                 <div class="input-container">
                     <i class="ri-user-smile-line input-icon"></i>
                     <input type="text" name="last-name" value="<?php if (!empty($_SESSION["last-name-input"]))
                         echo htmlspecialchars($_SESSION["last-name-input"]); ?>" placeholder="Last" required>
                 </div>
+            </div>
+
+            <div class="input-container" style="padding-left: 5px; margin-top: -10px;">
+                <input type="checkbox" name="no-middle-name-checkbox" id="no-middle-name-checkbox" value="N/A">
+                <label style="padding-left: 6px; color: gray; font-weight: normal;" for="no-middle-name-checkbox">No Middle Name</label>
             </div>
 
             <label>Contact Information</label>

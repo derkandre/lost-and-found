@@ -32,7 +32,7 @@ if (!isset($_SESSION["user_id"])) {
                 </div>
                 <div class="card-body">
                     <p><?php echo date('m/d/Y'); ?></p>
-                    <p>Welcome back, <?php echo htmlspecialchars(getNameOfUser($_SESSION["user_id"])); ?>!</p>
+                    <p>Welcome back, <?php echo htmlspecialchars(getNameOfUser(decryptData(($_SESSION["user_id"])), $conn)); ?>!</p>
                 </div>
             </div>
         </div>
