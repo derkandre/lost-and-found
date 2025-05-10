@@ -1,15 +1,16 @@
 <?php
 
-require '../database/connection.php';
-include '../security/encryption.php';
+require_once 'database/connection.php';
+include_once 'security/encryption.php';
 
-$successMsg = $errorMsg = "";
+$successMsg = $errorMsg = $warningMsg = "";
 
 session_start();
 
-// Using session fixed where the logout message doesn't clear afterwards.
-// Previously, I only used the variable but it had a problem, yeah variables reset
-// if I force refresh the page without the ?ref parameter in the URL.
+if (isset($_SESSION["user_id"]) && isset($_SESSION["user_role"])) {
+    header("Location: " . ($_SESSION["user_role"] == "Admin" ? "admin/" : "dashboard/"));
+}
+
 if (isset($_SESSION['success_msg'])) {
     $successMsg = $_SESSION['success_msg'];
     unset($_SESSION['success_msg']);
@@ -20,8 +21,15 @@ if (isset($_SESSION['error_msg'])) {
     unset($_SESSION['error_msg']);
 }
 
+if (isset($_SESSION['warning_msg'])) {
+    $warningMsg = $_SESSION['warning_msg'];
+    unset($_SESSION['warning_msg']);
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $successMsg = "";
+    $warningMsg = "";
+    $errorMsg = "";
 
     $username = $_POST["username"];
     $password = $_POST["password"];
@@ -39,23 +47,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         if ($passwordMatch) {
             $_SESSION["user_id"] = encryptData($data["user_id"]);
-            header("Location: index.php");
+            $userRole = $_SESSION["user_role"] = $data["role"];
+
+            if ($userRole == "Admin") {
+                header("Location: admin/");
+                exit();
+            } else {
+                header("Location: dashboard/");
+            }
+
         } else {
             $_SESSION['error_msg'] = "Incorrect username or password!";
-            header("Location: index.php");
+            header("Location: ../login.php");
         }
     } else {
         $_SESSION['error_msg'] = "Incorrect username or password!";
-        // This fixed my problem where the message does not show the first time I try to enter 
-        // an incorrect username/password. The message won't take effect unless reloaded due
-        // to how session works.
-        header("Location: login.php");
+        header("Location: ../login.php");
     }
 }
 
 if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
     $_SESSION['success_msg'] = "You have been logged out successfully!";
-    header("Location: login.php");
+    header("Location: ../login.php");
     exit;
 }
 ?>
@@ -64,8 +77,8 @@ if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
 
 <head>
     <title>ICTS LostTrack | Log In</title>
-    <link rel="stylesheet" href="../styles/style.css">
-    <link rel="stylesheet" href="../styles/remixicon.css">
+    <link rel="stylesheet" href="/styles/style.css">
+    <link rel="stylesheet" href="/styles/remixicon.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 </head>
 
@@ -73,7 +86,7 @@ if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
     <div class="container-solid">
         <form action="" method="POST">
             <div class="logo-title">
-                <img src="../assets/images/ccsitlogo.png" width="50px" height="50px">
+                <img src="/assets/images/ccsitlogo.png" width="50px" height="50px">
                 <h2>LOGIN</h2>
             </div>
             <hr>
@@ -98,6 +111,10 @@ if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
 
             <?php if (!empty($errorMsg)): ?>
                 <span class="error-message"><?php echo $errorMsg; ?></span>
+            <?php endif; ?>
+
+            <?php if (!empty($warningMsg)): ?>
+                <span class="warning-message"><?php echo $warningMsg; ?></span>
             <?php endif; ?>
         </form>
     </div>
