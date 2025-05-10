@@ -2,8 +2,10 @@
 require '../database/connection.php';
 include '../security/encryption.php';
 
-if (!isset($_GET['id'])) {
-    header('Location: accounts.php');
+session_start();
+
+if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "Admin") {
+    header("Location: ../error/401.php?ref=login&role=admin");
     exit();
 }
 

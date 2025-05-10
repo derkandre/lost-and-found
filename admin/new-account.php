@@ -4,8 +4,9 @@ include 'validations.php';
 
 session_start();
 
-if (!isset($_SESSION["user_id"])) {
-    header("Location: ../error/401.php?ref=login");
+if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "Admin") {
+    header("Location: ../error/401.php?ref=login&role=admin");
+    exit();
 }
 
 $successMsg = $errorMsg = "";
@@ -26,14 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $role = trim(string: $_POST["role"]);
     $student_id = trim($_POST["student-id"]);
     $first_name = trim($_POST["first-name"]);
-
-    if (isset($_POST['no-middle-name-checkbox']) && $_POST['no-middle-name-checkbox'] === 'N/A') {
-        $middle_name = strtoupper("N/A");
-    } else {
-        $middle_name = trim($_POST["middle-name"]);
-        $middle_name = ucwords(string: strtolower($middle_name));
-    }    
-    
+    $middle_name = trim($_POST["middle-name"]);
     $last_name = trim($_POST["last-name"]);
     $email = trim($_POST["email"]);
     $contact = trim($_POST["contact"]);
@@ -49,6 +43,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $_SESSION["username-input"] = $username;
     $_SESSION["stud-id-input"] = $student_id;
+    $_SESSION["role-input"] = $role;
     $_SESSION["first-name-input"] = $first_name;
     $_SESSION["middle-name-input"] = $middle_name;
     $_SESSION["last-name-input"] = $last_name;
@@ -73,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit();
     }
 
-    validateAllFieldInputs($username, $password, $role, $student_id, $first_name, $middle_name, $last_name, $email, $contact);
+    validateAllFieldInputs($username, $password, $confirm_password, $role, $student_id, $first_name, $middle_name, $last_name, $email, $contact);
 
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
@@ -95,6 +90,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($studentStmt->execute()) {
             unset($_SESSION["username-input"]);
             unset($_SESSION["stud-id-input"]);
+            unset($_SESSION["role-input"]);
             unset($_SESSION["first-name-input"]);
             unset($_SESSION["middle-name-input"]);
             unset($_SESSION["last-name-input"]);
@@ -103,8 +99,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             $_SESSION["success_msg"] = "User has been registered successfully!";
         } else {
-            // This will remain as is until I can get an A-OK from my instructor to use transactions
-            // But this seems like good already but afaik using transactions can simplify this?
             $deleteUserQuery = "DELETE FROM users WHERE user_id = ?";
             $deleteUserStmt = $conn->prepare($deleteUserQuery);
             $deleteUserStmt->bind_param("i", $user_id);
@@ -159,19 +153,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <i class="ri-lock-password-fill input-icon"></i>
                     <input type="password" name="password" placeholder="Password" maxlength="32" required>
                 </div>
-
+                
                 <div class="input-container">
-                    <i class="ri-shield-fill input-icon"></i>
-                    <select style="height: 46px; padding-left: 40px;" name="role">
-                        <option value="none" disabled <?php if (empty($_SESSION["role-input"]))
-                            echo "selected"; ?>
-                            hidden>Select Role</option>
-                        <option value="user" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "user")
-                            echo "selected"; ?>>User</option>
-                        <option value="admin" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "admin")
-                            echo "selected"; ?>>Admin</option>
-                    </select>
+                    <i class="ri-lock-password-fill input-icon"></i>
+                    <input type="password" name="confirm-password" placeholder="Confirm Password" maxlength="32" required>
                 </div>
+            </div>
+            <div class="input-container">
+                <i class="ri-shield-fill input-icon"></i>
+                <select style="height: 46px; padding-left: 40px;" name="role" required>
+                    <option value="none" disabled <?php if (empty($_SESSION["role-input"]))
+                        echo "selected"; ?> hidden>
+                        Select Role</option>
+                    <option value="user" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "user")
+                        echo "selected"; ?>>User</option>
+                    <option value="admin" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "admin")
+                        echo "selected"; ?>>Admin</option>
+                </select>
             </div>
 
             <hr>
@@ -202,11 +200,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 </div>
             </div>
 
-            <div class="input-container" style="padding-left: 5px; margin-top: -10px;">
-                <input type="checkbox" name="no-middle-name-checkbox" id="no-middle-name-checkbox" value="N/A">
-                <label style="padding-left: 6px; color: gray; font-weight: normal;" for="no-middle-name-checkbox">No Middle Name</label>
-            </div>
-
             <label>Contact Information</label>
             <div class="grouped-inputs">
                 <div class="input-container">
@@ -223,13 +216,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
 
             <div style="text-align: center;">
-                <?php if (!empty($successMsg)): ?>
-                    <span class="success-message"><?php echo htmlspecialchars($successMsg) ?></span>
-                <?php endif; ?>
+                <div style="text-align: center;">
+                    <?php if (!empty($successMsg)) { ?>
+                        <span class="success-message"><?php echo htmlspecialchars($successMsg); ?></span>
+                    <?php } ?>
 
-                <?php if (!empty($errorMsg)): ?>
-                    <span class="error-message"><?php echo htmlspecialchars($errorMsg); ?></span>
-                <?php endif; ?>
+                    <?php
+                    if (!empty($errorMsg)) {
+                        if (is_array($errorMsg)) {
+                            foreach ($errorMsg as $msg) { ?>
+                                <p class="error-message" style="margin-bottom: -32px; text-align: left;">
+                                    <?php echo $msg; ?>
+                                </p><br>
+                            <?php }
+                        } else { ?>
+                            <span class="error-message"><?php echo htmlspecialchars($errorMsg); ?></span>
+                        <?php }
+                    }
+                    ?>
+                </div>
             </div>
 
             <button type="submit">Register</button>

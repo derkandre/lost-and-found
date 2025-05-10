@@ -45,6 +45,9 @@ if (isset($_SESSION["active-page"]))
         } ?>">
             <a href="profile.php"><i class="ri-user-5-line"></i><span>Profile</span></a>
         </li>
+        <li class="logout">
+            <a href="logout.php"><i class="ri-logout-box-line"></i><span>Logout</span></a>
+        </li>
     </ul>
     <div class="sidebar-footer">
         <small>&copy; 2025 LostTrack System</small>

@@ -77,7 +77,7 @@ header p {
     font-weight: bold;
 }
 
-/* Start of the styles for the forms */ 
+/* ===== FOR FORMS ====== */ 
 
 form {
     display: flex;
@@ -175,7 +175,7 @@ form button:hover {
     gap: 10px;
 }
 
-/* START for the styles of TABLES */
+/* ===== FOR TABLE ===== */
 
 table {
     border-collapse: separate;
@@ -193,22 +193,50 @@ th, td {
 
 /* ===== END for the styles of my TABLES ==== */
 
-/* START for the styles of my MESSAGES */
-.error-message,
-.success-message {
-    padding: 10px;
-    border-radius: 5px;
-    font-size: 1rem;
-}
-
+/* ===== FOR MESSAGES ===== */
 .error-message {
     background: #f8d7da;
+    color: #d4392e;
+    border-left: 5px solid #d4392e;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.error-message a {
     color: #d4392e;
 }
 
 .success-message {
     background: #d4edda;
     color: #2cb14b;
+    border-left: 5px solid #2cb14b;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.success-message a {
+    color: #2cb14b;
+}
+
+.warning-message {
+    background: #fff3cd;
+    color: #f59c1f;
+    border-left: 5px solid #f59c1f;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.warning-message a {
+    color: #f59c1f;
 }
 
 .error-highlight {
@@ -258,9 +286,8 @@ th, td {
     text-align: center;
     text-decoration: none;
 }
-/* END of the styles for MESSAGES */
 
-/* START of the styles for the SIDEBAR */
+/* FOR SIDEBAR */
 .sidebar-toggle-checkbox {
     display: none;
 }

@@ -6,8 +6,8 @@ include 'session-details.php';
 
 session_start();
 
-if (!isset($_SESSION["user_id"])) {
-    header("Location: ../error/401.php?ref=login");
+if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "Admin") {
+    header("Location: ../error/401.php?ref=login&role=admin");
     exit();
 }
 
@@ -69,19 +69,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $username = trim($_POST["username"]);
     $password = trim($_POST["password"]);
+    $confirm_password = trim($_POST["confirm-password"]);
     $role = trim($_POST["role"]);
     $studentID = trim($_POST["student-id"]);
     $first_name = trim($_POST["first-name"]);
-
-    if (isset($_POST['no-middle-name-checkbox']) && $_POST['no-middle-name-checkbox'] === 'N/A') {
-        $middle_name = "N/A";
-    } else {
-        if (strtoupper($_POST["middle-name"]) == "N/A")
-            $middle_name = "N/A";
-        else
-            $middle_name = ucwords(strtolower(trim($_POST["middle-name"])));
-    }
-
+    $middle_name = trim($_POST["middle-name"]);
     $last_name = trim($_POST["last-name"]);
     $email = trim($_POST["email"]);
     $contact = trim($_POST["contact"]);
@@ -92,6 +84,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $oldUsername = trim(getUsername($userID, $conn));
     $oldStudentID = trim(getStudentID($userID, $conn));
     $oldEmail = trim(getUserEmail($userID, $conn));
+
+    $_SESSION["edit_username_input"] = $username;
+    $_SESSION["edit_role_input"] = $role;
+    $_SESSION["edit_student_id_input"] = $studentID;
+    $_SESSION["edit_first_name_input"] = $first_name;
+    $_SESSION["edit_middle_name_input"] = $middle_name;
+    $_SESSION["edit_last_name_input"] = $last_name;
+    $_SESSION["edit_email_input"] = $email;
+    $_SESSION["edit_contact_input"] = $contact;
 
     // Fixed the issue where this still runs even tho the username remains unchanged
     // simply because I decrypted the ID in the function as it's already decrypted pala dri.
@@ -117,7 +118,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    validateEditedInputs($username, $password, $role, $studentID, $first_name, $middle_name, $last_name, $email, $contact);
+    validateEditedInputs($username, $password, $confirm_password, $role, $student_id, $first_name, $middle_name, $last_name, $email, $contact);
 
     if (!empty($password)) {
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
@@ -141,6 +142,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } else {
                 $_SESSION["success_msg"] = "User credentials updated but no changes detected in student details.";
             }
+
+            unset($_SESSION["edit_username_input"]);
+            unset($_SESSION["edit_role_input"]);
+            unset($_SESSION["edit_student_id_input"]);
+            unset($_SESSION["edit_first_name_input"]);
+            unset($_SESSION["edit_middle_name_input"]);
+            unset($_SESSION["edit_last_name_input"]);
+            unset($_SESSION["edit_email_input"]);
+            unset($_SESSION["edit_contact_input"]);
         } else {
             $_SESSION["error_msg"] = "Student update failed: " . $updateStudentStmt->error;
         }
@@ -178,22 +188,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="input-container">
                     <i class="ri-user-fill input-icon"></i>
                     <input type="text" name="username" placeholder="Username"
-                        value="<?php echo htmlspecialchars($username); ?>" maxlength="32" required>
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_username_input']) ? $_SESSION['edit_username_input'] : $username); ?>"
+                        maxlength="32" required>
                 </div>
                 <div class="input-container">
                     <i class="ri-lock-password-fill input-icon"></i>
-                    <input type="password" name="password" placeholder="Enter new password" maxlength="32">
+                    <input type="password" name="password" placeholder="Password" maxlength="32">
                 </div>
+
                 <div class="input-container">
-                    <i class="ri-shield-fill input-icon"></i>
-                    <select style="height: 46px; padding-left: 40px;" name="role">
-                        <option value="none" disabled hidden>Select Role</option>
-                        <option value="user" <?php if ($role == "user")
-                            echo "selected"; ?>>User</option>
-                        <option value="admin" <?php if ($role == "admin")
-                            echo "selected"; ?>>Admin</option>
-                    </select>
+                    <i class="ri-lock-password-fill input-icon"></i>
+                    <input type="password" name="confirm-password" placeholder="Confirm Password" maxlength="32">
                 </div>
+            </div>
+
+            <div class="input-container">
+                <i class="ri-shield-fill input-icon"></i>
+                <?php $selected_role = isset($_SESSION['edit_role_input']) ? $_SESSION['edit_role_input'] : $role; ?>
+                <select style="height: 46px; padding-left: 40px;" name="role">
+                    <option value="none" disabled hidden <?php if ($selected_role == "none" || empty($selected_role))
+                        echo "selected"; ?>>Select Role</option>
+                    <option value="user" <?php if ($selected_role == "user")
+                        echo "selected"; ?>>User</option>
+                    <option value="admin" <?php if ($selected_role == "admin")
+                        echo "selected"; ?>>Admin</option>
+                </select>
             </div>
 
             <hr>
@@ -202,43 +221,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <div class="input-container">
                 <i class="ri-id-card-line input-icon"></i>
                 <input type="text" name="student-id" placeholder="ID Number"
-                    value="<?php echo htmlspecialchars($student_id); ?>" required>
+                    value="<?php echo htmlspecialchars(isset($_SESSION['edit_student_id_input']) ? $_SESSION['edit_student_id_input'] : $student_id); ?>"
+                    required>
             </div>
             <label>Full Name</label>
             <div class="grouped-inputs">
                 <div class="input-container">
                     <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="first-name" value="<?php echo htmlspecialchars($first_name); ?>"
+                    <input type="text" name="first-name"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_first_name_input']) ? $_SESSION['edit_first_name_input'] : $first_name); ?>"
                         placeholder="First" required>
                 </div>
                 <div class="input-container">
                     <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="middle-name" value="<?php echo htmlspecialchars($middle_name); ?>"
+                    <input type="text" name="middle-name"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_middle_name_input']) ? $_SESSION['edit_middle_name_input'] : $middle_name); ?>"
                         placeholder="Middle">
                 </div>
                 <div class="input-container">
                     <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="last-name" value="<?php echo htmlspecialchars($last_name); ?>"
+                    <input type="text" name="last-name"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_last_name_input']) ? $_SESSION['edit_last_name_input'] : $last_name); ?>"
                         placeholder="Last" required>
                 </div>
-            </div>
-
-            <div class="input-container" style="padding-left: 5px; margin-top: -10px;">
-                <input type="checkbox" name="no-middle-name-checkbox" id="no-middle-name-checkbox" value="N/A">
-                <label style="padding-left: 6px; color: gray; font-weight: normal;" for="no-middle-name-checkbox">No
-                    Middle Name</label>
             </div>
 
             <label>Contact information</label>
             <div class="grouped-inputs">
                 <div class="input-container">
                     <i class="ri-mail-line input-icon"></i>
-                    <input type="text" name="email" value="<?php echo htmlspecialchars($email); ?>" placeholder="Email"
-                        required>
+                    <input type="text" name="email"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_email_input']) ? $_SESSION['edit_email_input'] : $email); ?>"
+                        placeholder="Email" required>
                 </div>
                 <div class="input-container">
                     <i class="ri-phone-line input-icon"></i>
-                    <input type="text" name="contact" value="<?php echo htmlspecialchars($contact); ?>"
+                    <input type="text" name="contact"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_contact_input']) ? $_SESSION['edit_contact_input'] : $contact); ?>"
                         placeholder="Contact Number" required>
                 </div>
             </div>
@@ -247,9 +266,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <?php if (!empty($successMsg)): ?>
                     <span class="success-message"><?php echo htmlspecialchars($successMsg); ?></span>
                 <?php endif; ?>
-                <?php if (!empty($errorMsg)): ?>
-                    <span class="error-message"><?php echo htmlspecialchars($errorMsg); ?></span>
-                <?php endif; ?>
+
+                <?php
+                if (!empty($errorMsg)) {
+                    if (is_array($errorMsg)) {
+                        foreach ($errorMsg as $msg) { ?>
+                            <p class="error-message" style="margin-bottom: -32px; text-align: left;">
+                                <?php echo $msg; ?>
+                            </p><br>
+                        <?php }
+                    } else { ?>
+                        <span class="error-message"><?php echo htmlspecialchars($errorMsg); ?></span>
+                    <?php }
+                }
+                ?>
             </div>
 
             <button type="submit">Submit</button>

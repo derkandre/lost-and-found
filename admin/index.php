@@ -7,8 +7,9 @@ session_start();
 
 $_SESSION["active-page"] = "home";
 
-if (!isset($_SESSION["user_id"])) {
-    header("Location: ../error/401.php?ref=login");
+if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "Admin") {
+    header("Location: ../error/401.php?ref=login&role=admin");
+    exit();
 }
 ?>
 

@@ -95,4 +95,22 @@ function getUserEmail($id, $conn) {
     return "N/A";
 }
 
+function getUserRole($id, $conn) {
+    $query = "SELECT role FROM users WHERE user_id = ?";
+
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    if ($result->num_rows > 0) {
+        $data = $result->fetch_assoc();
+
+        return $data["role"];
+    }
+
+    return "N/A";
+}
+
 ?>
