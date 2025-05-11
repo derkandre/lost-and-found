@@ -8,6 +8,7 @@
     font-family: "Remixicon";
     src: url("../assets/fonts/remixicon.ttf") format("truetype");
 }
+
 /* END of the styles for ICONS */
 
 * {
@@ -77,7 +78,7 @@ header p {
     font-weight: bold;
 }
 
-/* ===== FOR FORMS ====== */ 
+/* ===== FOR FORMS ====== */
 
 form {
     display: flex;
@@ -177,7 +178,7 @@ form button:hover {
 }
 
 .grouped-inputs {
-    display: flex; 
+    display: flex;
     gap: 10px;
 }
 
@@ -193,15 +194,16 @@ label:has(+ input:required)::after {
 table {
     border-collapse: separate;
     border-spacing: 0;
-    border: 2px solid white;
+    border: 2px solid #050a31;
     border-radius: 10px;
     overflow: hidden;
 }
 
-th, td {
-    border: 1px solid white; 
+th,
+td {
+    border: 1px solid #050a31;
     padding: 10px;
-    color: white;
+    color: #050a31;
 }
 
 /* ===== END for the styles of my TABLES ==== */
@@ -290,6 +292,16 @@ th, td {
     text-decoration: none;
 }
 
+.success-button {
+    background-color: #2cb14b;
+    border-radius: 6px;
+    color: white;
+    padding: 4px 8px 4px 6px;
+    margin: 0 4px;
+    text-align: center;
+    text-decoration: none;
+}
+
 .secondary-button {
     background-color: #ccc;
     border-radius: 6px;
@@ -298,6 +310,35 @@ th, td {
     margin: 0 4px;
     text-align: center;
     text-decoration: none;
+}
+
+.claim-button {
+    background-color: #060e4d;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 6px;
+    display: inline-block;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.claim-button:hover {
+    background-color: #f59c1f;
+    color: #060e4d;
+}
+
+.success-icon {
+    color: #28a745; 
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+.unknown-icon {
+    color: slategray; 
+    margin-right: 5px;
+    vertical-align: middle;
 }
 
 /* FOR SIDEBAR */
@@ -390,6 +431,7 @@ th, td {
 }
 
 .sidebar-menu li.active a {
+    border-left: 4px solid #f59c1f;
     background: rgba(6, 14, 77, 0.08);
     color: #060e4d;
 }
@@ -398,14 +440,15 @@ th, td {
     color: #d4392e;
 }
 
-.sidebar-menu li.login a { 
-    background-color: #007bff; 
+.sidebar-menu li.login a {
+    background-color: #007bff;
 }
 
-.sidebar-menu li.register a { 
-    background-color: #28a745; 
+.sidebar-menu li.register a {
+    background-color: #28a745;
     color: white;
 }
+
 .sidebar-footer {
     padding: 10px;
     text-align: center;
@@ -413,6 +456,7 @@ th, td {
     color: #888;
     border-top: 1px solid #f0f0f0;
 }
+
 /* END of the styles for the SIDEBAR */
 
 
@@ -451,11 +495,25 @@ th, td {
     gap: 20px;
 }
 
-.col-full { flex: 1 0 100%; }
-.col-half { flex: 1 0 calc(50% - 10px); }
-.col-third { flex: 1 0 calc(33.333% - 14px); }
-.col-two-thirds { flex: 2 0 calc(66.666% - 7px); }
-.col-quarter { flex: 1 0 calc(25% - 15px); }
+.col-full {
+    flex: 1 0 100%;
+}
+
+.col-half {
+    flex: 1 0 calc(50% - 10px);
+}
+
+.col-third {
+    flex: 1 0 calc(33.333% - 14px);
+}
+
+.col-two-thirds {
+    flex: 2 0 calc(66.666% - 7px);
+}
+
+.col-quarter {
+    flex: 1 0 calc(25% - 15px);
+}
 
 .card {
     background: white;
@@ -473,7 +531,7 @@ th, td {
     border-bottom: 1px solid #f0f0f0;
 }
 
-.card-header h2, 
+.card-header h2,
 .card-header h3 {
     margin: 0;
     color: #060e4d;
@@ -496,9 +554,9 @@ th, td {
     .row {
         flex-wrap: wrap;
     }
-    
-    .col-half, 
-    .col-third, 
+
+    .col-half,
+    .col-third,
     .col-two-thirds {
         flex: 1 0 calc(50% - 10px);
     }
@@ -520,20 +578,20 @@ th, td {
         width: calc(100% - 60px);
     }
 
-    .sidebar-toggle-checkbox:checked ~ .sidebar {
+    .sidebar-toggle-checkbox:checked~.sidebar {
         width: 250px;
     }
 
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-header h3,
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-menu li a span,
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-footer {
+    .sidebar-toggle-checkbox:checked~.sidebar .sidebar-header h3,
+    .sidebar-toggle-checkbox:checked~.sidebar .sidebar-menu li a span,
+    .sidebar-toggle-checkbox:checked~.sidebar .sidebar-footer {
         display: block;
     }
 
-    .sidebar-toggle-checkbox:checked ~ .sidebar .sidebar-menu li a span {
+    .sidebar-toggle-checkbox:checked~.sidebar .sidebar-menu li a span {
         display: inline;
     }
-    
+
     form,
     form input,
     form select,
@@ -547,8 +605,8 @@ th, td {
         width: 100%;
     }
 
-    .col-half, 
-    .col-third, 
+    .col-half,
+    .col-third,
     .col-two-thirds,
     .col-quarter {
         flex: 1 0 100%;

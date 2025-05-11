@@ -19,13 +19,18 @@ if (isset($_SESSION["active-page"]))
             echo 'active';
         } ?>">
             <a href="index.php"><i class="ri-home-4-line"></i><span>Home</span></a>
-        </li>        
+        </li>    
+        <li class="<?php if ($current_page == 'listing') {
+            echo 'active';
+        } ?>">
+            <a href="listings.php"><i class="ri-list-check-3"></i><span>Public Listing</span></a>
+        </li>       
         <li class="<?php if ($current_page == 'report-item') {
             echo 'active';
         } ?>">
             <a href="report.php"><i class="ri-alarm-warning-line"></i><span>Report Item</span></a>
         </li>     
-        <li class="<?php if ($current_page == 'reports') {
+        <li class="<?php if ($current_page == 'my-reports') {
             echo 'active';
         } ?>">
             <a href="my-reports.php"><i class="ri-file-chart-line"></i><span>My Reports</span></a>

@@ -1,4 +1,5 @@
 <?php
+
 require '../database/connection.php';
 include '../security/encryption.php';
 include '../admin/session-details.php';
@@ -13,11 +14,10 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["user_role"] !== "User") {
 
 if (isset($_SESSION["verified_status"])) {
     if ($_SESSION["verified_status"] == "Unverified") {
-        $_SESSION["warning-message"] = "Your account is currently <br>unverified</b>. You will recieve an email once the admin has verified and approved your registration.";
+        $_SESSION["warning-message"] = "Your account is currently unverified. You will receive an email once the admin verifies your registration.";
         header("Location: ../login.php?status=unverified");
         exit();
     }
-
     $_SESSION["verified_status"] = "Verified";
 }
 
@@ -33,37 +33,75 @@ if (isset($_SESSION['error_msg'])) {
     unset($_SESSION['error_msg']);
 }
 
-$groups = [
-    'Electronic Devices' => ['Mobile Phone', 'Laptop', 'Tablet', 'Headphones'],
-    'Stationery' => ['Notebook', 'Pen', 'Calculator'],
-    'Personal Items' => ['ID Card', 'ATM Card', 'Wallet', 'Umbrella'],
-    'Other' => ['Other']
-];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (isset($_POST['approve_claim']) && isset($_POST['item_id_for_action']) && isset($_POST['claimer_id_for_action'])) {
+        $itemId = (int) $_POST['item_id_for_action'];
+        $claimerId = (int) $_POST['claimer_id_for_action'];
 
-$summary = [];
-foreach ($groups as $label => $categories) {
-    $insert = "'" . implode("','", $categories) . "'";
+        $verifyStmt = $conn->prepare("SELECT reported_by, item_name FROM items WHERE item_id = ? AND reported_by = ? AND status = 'Pending'");
+        $verifyStmt->bind_param("ii", $itemId, $userId);
+        $verifyStmt->execute();
+        $verifyResult = $verifyStmt->get_result();
+        if ($verifyResult->num_rows > 0) {
+            $row = $verifyResult->fetch_assoc();
+            $itemName = $row['item_name'];
 
-    $getCountQuery = "SELECT COUNT(*) AS count FROM items WHERE reported_by = ? AND category IN ($insert)";
-    
-    $stmt = $conn->prepare($getCountQuery);
-    $stmt->bind_param("i", $userId);
+            $approveStmt = $conn->prepare("UPDATE items SET status = 'Claimed' WHERE item_id = ? AND status = 'Pending'");
+            $approveStmt->bind_param("i", $itemId);
+            if ($approveStmt->execute() && $approveStmt->affected_rows > 0) {
+                $_SESSION['success_msg'] = "Claim for '" . htmlspecialchars($itemName) . "' approved successfully.";
+            } else {
+                $_SESSION['error_msg'] = "Unable to approve the claim.";
+            }
+            $approveStmt->close();
+        } else {
+            $_SESSION['error_msg'] = "Verification failed or you are not authorized.";
+        }
+        $verifyStmt->close();
+        header("Location: my-reports.php");
+        exit();
+    }
 
-    $stmt->execute();
+    if (isset($_POST['reject_claim']) && isset($_POST['item_id_for_action']) && isset($_POST['claimer_id_for_action'])) {
+        $itemId = (int) $_POST['item_id_for_action'];
+        $claimerId = (int) $_POST['claimer_id_for_action'];
 
-    $result = $stmt->get_result();
-    $data = $result->fetch_assoc();
+        $verifyStmt = $conn->prepare("SELECT reported_by, item_name FROM items WHERE item_id = ? AND reported_by = ? AND status = 'Pending'");
+        $verifyStmt->bind_param("ii", $itemId, $userId);
+        $verifyStmt->execute();
+        $verifyResult = $verifyStmt->get_result();
+        if ($verifyResult->num_rows > 0) {
+            $row = $verifyResult->fetch_assoc();
+            $itemName = $row['item_name'];
 
-    $summary[$label] = (int)$data["count"];
-    $stmt->close();
+            $rejectStmt = $conn->prepare("UPDATE items SET status = 'Found', claimed_by = NULL, date_claimed = NULL WHERE item_id = ? AND status = 'Pending'");
+            $rejectStmt->bind_param("i", $itemId);
+            if ($rejectStmt->execute() && $rejectStmt->affected_rows > 0) {
+                $_SESSION['success_msg'] = "Claim for '" . htmlspecialchars($itemName) . "' rejected.";
+            } else {
+                $_SESSION['error_msg'] = "Unable to reject the claim.";
+            }
+            $rejectStmt->close();
+        } else {
+            $_SESSION['error_msg'] = "Verification failed or you are not authorized.";
+        }
+        $verifyStmt->close();
+        header("Location: my-reports.php");
+        exit();
+    }
 }
 
-$getItemsQuery = "SELECT item_id, item_name, category, date_reported, status FROM items WHERE reported_by = ? ORDER BY date_reported DESC";
+$userId = decryptData($_SESSION["user_id"]);
+
+$getItemsQuery = "SELECT i.item_id, i.item_name, i.category, i.date_reported, i.status, i.claimed_by, u.username as claimer_username
+                  FROM items i
+                  LEFT JOIN users u ON i.claimed_by = u.user_id
+                  WHERE i.reported_by = ?
+                  ORDER BY i.date_reported DESC";
 $stmt = $conn->prepare($getItemsQuery);
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
-
 ?>
 <html>
 
@@ -76,59 +114,71 @@ $result = $stmt->get_result();
 
 <body class="admin-body">
     <?php include 'sidebar.php'; ?>
-    <div class="main-content"">
-            <h2 style=" color: whitesmoke; margin-bottom: 20px;">My Reports</h2>
+    <div class="main-content" style="background-color: #fff; border-radius: 8px;">
+        <div class="logo-title">
+            <img src="../assets/images/ccsitlogo.png" width="50px" height="50px">
+            <h2>MY REPORTS</h2>
+        </div>
+        <hr>
 
         <?php if ($successMsg): ?>
-            <div class=" success-message"><?php echo htmlspecialchars($successMsg); ?></div>
+            <div class="success-message" style="margin-bottom: -15px"><?php echo htmlspecialchars($successMsg); ?></div>
         <?php endif; ?>
         <?php if ($errorMsg): ?>
-            <div class="error-message"><?php echo htmlspecialchars($errorMsg); ?></div>
+            <div class="error-message" style="margin-bottom: -15px"><?php echo htmlspecialchars($errorMsg); ?></div>
         <?php endif; ?>
 
-        <div class="dashboard">
-            <div class="card">
-                <div class="card-header">
-                    <h2>Report Inventory Summary</h2>
-                </div>
+        <br>
 
-                <div class="card-body">
-                    <?php
-                    foreach ($summary as $label => $count) {
-                        echo '<div>';
-                        echo '<h4>' . htmlspecialchars($label) . '</h4>';
-                        echo '<p>' . htmlspecialchars($count) . ' reported</p>';
-                        echo '</div>';
-                    }
-                    ?>
-                </div>
-            </div>
-        </div>
-
-        <table style="width:100%; margin-top:1em;">
+        <table width="100%">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>No.</th>
                     <th>Item Name</th>
                     <th>Category</th>
                     <th>Date Reported</th>
                     <th>Status</th>
+                    <th>Actions / Claimer</th>
                 </tr>
             </thead>
             <tbody>
                 <?php
-                if ($result->num_rows) {
+                $count = 1;
+
+                if ($result->num_rows > 0) {
                     while ($data = $result->fetch_assoc()) {
-                        echo '<tr>'
-                            . '<td style="text-align: center;">' . $data['item_id'] . '</td>'
-                            . '<td>' . htmlspecialchars($data['item_name']) . '</td>'
-                            . '<td style="text-align: center;">' . htmlspecialchars($data['category']) . '</td>'
-                            . '<td style="text-align: center;">' . htmlspecialchars($data['date_reported']) . '</td>'
-                            . '<td style="text-align: center;">' . htmlspecialchars($data['status']) . '</td>'
-                            . '</tr>';
+                        echo "<tr>";
+                        echo "<td style='text-align: center;'>" . $count++ . "</td>";
+                        echo "<td>" . htmlspecialchars($data['item_name']) . "</td>";
+                        echo "<td>" . htmlspecialchars($data['category']) . "</td>";
+                        echo "<td>" . htmlspecialchars($data['date_reported']) . "</td>";
+                        echo "<td>" . htmlspecialchars($data['status']) . "</td>";
+                        $textAlign = ($data['status'] == 'Pending') ? 'center' : 'left';
+                        echo "<td style='text-align: $textAlign;'>";
+
+                        if ($data['status'] == 'Pending' && !empty($data['claimed_by'])) {
+                            echo "Claim by: <strong>" . htmlspecialchars($data['claimer_username'] ?: 'Unknown') . "</strong><br>";
+                            echo "<a class='success-button' href='action.php?type=claim&mode=pending&action=approve&id="
+                                . urlencode(encryptData($data['item_id']))
+                                . "&claimer=" . urlencode(encryptData($data['claimed_by']))
+                                . "&source=my-reports'>";
+                            echo "<i class='ri-check-line'></i> Approve</a> ";
+
+                            echo "<a class='danger-button' href='action.php?type=claim&mode=pending&action=reject&id="
+                                . urlencode(encryptData($data['item_id']))
+                                . "&claimer=" . urlencode(encryptData($data['claimed_by']))
+                                . "&source=my-reports'>";
+                            echo "<i class='ri-close-line'></i> Reject</a>";
+                        } else if ($data['status'] == 'Claimed' && !empty($data['claimed_by'])) {
+                            echo "<i class='ri-checkbox-circle-fill success-icon'></i>Claimed by: <b>"
+                                . htmlspecialchars($data['claimer_username'] ?: 'Unknown')
+                                . "</b>";
+                        } else {
+                            echo "<i class='ri-question-fill unknown-icon'></i>Claimed by: <b>N/A</b>";
+                        }
+                        echo "</td>";
+                        echo "</tr>";
                     }
-                } else {
-                    echo '<tr><td colspan="5" style="text-align:center;">No reports found.</td></tr>';
                 }
                 ?>
             </tbody>

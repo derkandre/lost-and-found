@@ -1,0 +1,155 @@
+<?php
+<?php
+require '../database/connection.php';
+include '../security/encryption.php';
+include '../admin/session-details.php'; // Or your equivalent for user session details
+
+session_start();
+$_SESSION["active-page"] = "available-items"; // For sidebar active state
+
+// Check if user is logged in and is a 'User'
+if (!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"]) || $_SESSION["user_role"] !== "User") {
+    header("Location: ../error/401.php?ref=login&role=user");
+    exit();
+}
+
+// Check if account is verified
+if (isset($_SESSION["verified_status"]) && $_SESSION["verified_status"] == "Unverified") {
+    $_SESSION["warning_msg"] = "Your account is currently unverified. You cannot claim items until your account is approved.";
+    // We'll allow page view but claim processing will be blocked.
+    // The warning message will be picked up and displayed.
+}
+
+$current_user_id = decryptData($_SESSION["user_id"]);
+$successMsg = $errorMsg = $warningMsg = "";
+
+if (isset($_SESSION['success_msg'])) {
+    $successMsg = $_SESSION['success_msg'];
+    unset($_SESSION['success_msg']);
+}
+if (isset($_SESSION['error_msg'])) {
+    $errorMsg = $_SESSION['error_msg'];
+    unset($_SESSION['error_msg']);
+}
+if (isset($_SESSION['warning_msg'])) {
+    $warningMsg = $_SESSION['warning_msg']; 
+    unset($_SESSION['warning_msg']); 
+}
+
+
+// Handle Claim Action
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['claim_item_id'])) {
+    if (isset($_SESSION["verified_status"]) && $_SESSION["verified_status"] == "Unverified") {
+        $_SESSION['error_msg'] = "Your account is unverified. You cannot claim items.";
+        header("Location: available-items.php");
+        exit();
+    }
+
+    $item_to_claim_id = (int)$_POST['claim_item_id'];
+
+    $checkStmt = $conn->prepare("SELECT status, reported_by FROM items WHERE item_id = ? AND status = 'Found'");
+    $checkStmt->bind_param("i", $item_to_claim_id);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+
+    if ($checkResult->num_rows > 0) {
+        $itemData = $checkResult->fetch_assoc();
+        
+        $updateQuery = "UPDATE items SET status = 'Claimed', claimed_by_user_id = ?, date_claimed = NOW() WHERE item_id = ? AND status = 'Found'";
+        $stmt = $conn->prepare($updateQuery);
+        $stmt->bind_param("ii", $current_user_id, $item_to_claim_id);
+
+        if ($stmt->execute()) {
+            if ($stmt->affected_rows > 0) {
+                $_SESSION['success_msg'] = "Item claimed successfully! You will be contacted shortly regarding the pickup.";
+            } else {
+                $_SESSION['error_msg'] = "Item could not be claimed or was already claimed by someone else.";
+            }
+        } else {
+            $_SESSION['error_msg'] = "Error processing claim: " . $stmt->error;
+        }
+        $stmt->close();
+    } else {
+        $_SESSION['error_msg'] = "Item is no longer available or does not exist.";
+    }
+    $checkStmt->close();
+    header("Location: available-items.php");
+    exit();
+}
+
+$getItemsQuery = "SELECT item_id, item_name, description, category, date_reported, location_found, image_path FROM items WHERE status = 'Found' ORDER BY date_reported DESC";
+$stmt = $conn->prepare($getItemsQuery);
+$stmt->execute();
+$result = $stmt->get_result();
+
+?>
+<html>
+<head>
+    <title>LostTrack | Available Items</title>
+    <link rel="stylesheet" href="../styles/style.css">
+    <link rel="stylesheet" href="../styles/remixicon.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Removed inline <style> block -->
+</head>
+<body class="admin-body">
+    <?php include 'sidebar.php'; ?>
+
+    <div class="main-content">
+        <h2>Available Items for Claim</h2>
+
+        <?php if ($successMsg): ?>
+            <div class="success-message" style="margin-bottom: 15px;"><?php echo htmlspecialchars($successMsg); ?></div>
+        <?php endif; ?>
+        <?php if ($errorMsg): ?>
+            <div class="error-message" style="margin-bottom: 15px;"><?php echo htmlspecialchars($errorMsg); ?></div>
+        <?php endif; ?>
+        <?php if ($warningMsg): ?>
+            <div class="warning-message" style="margin-bottom: 15px;"><?php echo $warningMsg; ?></div>
+        <?php endif; ?>
+
+        <?php if ($result->num_rows > 0): ?>
+            <table> <!-- Removed class="responsive-table" -->
+                <thead>
+                    <tr>
+                        <th>Image</th>
+                        <th>Item Name</th>
+                        <th>Category</th>
+                        <th>Date Found</th>
+                        <th>Location Found</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($item = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td> <!-- Removed data-label -->
+                                <?php if (!empty($item['image_path']) && file_exists($item['image_path'])): ?>
+                                    <img src="<?php echo htmlspecialchars($item['image_path']); ?>" alt="<?php echo htmlspecialchars($item['item_name']); ?>" style="max-width: 60px; max-height: 60px; border-radius: 4px; object-fit: cover;">
+                                <?php else: ?>
+                                    <img src="../assets/images/no-image.png" alt="No image" style="max-width: 60px; max-height: 60px; border-radius: 4px; object-fit: cover;">
+                                <?php endif; ?>
+                            </td>
+                            <td><?php echo htmlspecialchars($item['item_name']); ?></td> <!-- Removed data-label -->
+                            <td><?php echo htmlspecialchars($item['category']); ?></td> <!-- Removed data-label -->
+                            <td><?php echo htmlspecialchars(date("M d, Y", strtotime($item['date_reported']))); ?></td> <!-- Removed data-label -->
+                            <td><?php echo htmlspecialchars($item['location_found']); ?></td> <!-- Removed data-label -->
+                            <td style="white-space: pre-wrap; word-break: break-word;"><?php echo nl2br(htmlspecialchars($item['description'])); ?></td> <!-- Removed data-label, kept inline style for description formatting -->
+                            <td> <!-- Removed data-label -->
+                                <form method="POST" action="available-items.php" style="margin:0;">
+                                    <input type="hidden" name="claim_item_id" value="<?php echo $item['item_id']; ?>">
+                                    <button type="submit" onclick="return confirm('Are you sure you want to claim this item?');">Claim Item</button> <!-- Removed class="claim-button" -->
+                                </form>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        <?php else: ?>
+            <!-- Changed info-message div to a simple paragraph -->
+            <p style="padding: 15px; text-align: center;">No items currently available for claim.</p>
+        <?php endif; ?>
+        <?php $stmt->close(); ?>
+    </div>
+</body>
+</html>

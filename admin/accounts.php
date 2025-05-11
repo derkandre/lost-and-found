@@ -47,7 +47,7 @@ if (isset($_GET["action"]) && isset($_GET["result"])) {
 <body class="admin-body">
     <?php require 'sidebar.php' ?>
 
-    <div class="main-content">
+    <div class="main-content" style="background-color: #fff; border-radius: 8px;">
         <h1 style="color: white;">Account Management</h1>
         <div style="text-align: right; margin-bottom: 15px; margin-top: -34px;">
             <a href="new-account.php" class="secondary-button">
