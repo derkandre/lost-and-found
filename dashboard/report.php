@@ -13,6 +13,16 @@ if (!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"]) || $_SESSION[
     exit();
 }
 
+if (isset($_SESSION["verified_status"])) {
+    if ($_SESSION["verified_status"] == "Unverified") {
+        $_SESSION["warning-message"] = "Your account is currently <br>unverified</b>. You will recieve an email once the admin has verified and approved your registration.";
+        header("Location: ../login.php?status=unverified");
+        exit();
+    }
+
+    $_SESSION["verified_status"] = "Verified";
+}
+
 $successMsg = $errorMsg = "";
 if (isset($_SESSION['success_msg'])) {
     $successMsg = $_SESSION['success_msg'];
@@ -39,7 +49,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     validateReportItemInputs($itemName, $description, $category, $locationFound, $_FILES["item_image"] ?? null);
 
     $image_path = "";
-    $targetDir = "../uploads/";
+    $targetDir = "../uploads/items";
 
     $imageFileType = strtolower(pathinfo($_FILES["item_image"]["name"], PATHINFO_EXTENSION));
 

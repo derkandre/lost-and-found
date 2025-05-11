@@ -112,7 +112,7 @@ function validateAllFieldInputs($username, $password, $confirm_password, $role, 
 
     if (!empty($errors)) {
         $_SESSION['error_msg'] = $errors;
-        header("Location: new-account.php");
+        header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
 }

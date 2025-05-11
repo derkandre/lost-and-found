@@ -6,11 +6,16 @@ include '../admin/session-details.php';
 
 session_start();
 
-$_SESSION["active-page"] = "home";
-
 if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "User") {
     header("Location: ../error/401.php?ref=login&role=user");
     exit();
+}
+
+if (isset($_SESSION["verified_status"])) {
+    if ($_SESSION["verified_status"] == "Unverified") {
+        header("Location: ../login.php?status=unverified");
+        exit();
+    }
 }
 
 ?>
@@ -26,7 +31,7 @@ if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSIO
 
 <body class="admin-body">
     <?php require 'sidebar.php' ?>
-    
+
     <div class="main-content">
         <div class="dashboard">
             <div class="card">
@@ -35,7 +40,9 @@ if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSIO
                 </div>
                 <div class="card-body">
                     <p><?php echo date('m/d/Y'); ?></p>
-                    <p>Welcome back, <?php echo htmlspecialchars(getNameOfUser(decryptData(($_SESSION["user_id"])), $conn)); ?>!</p>
+                    <p>Welcome back,
+                        <?php echo htmlspecialchars(getNameOfUser(decryptData(($_SESSION["user_id"])), $conn)); ?>!
+                    </p>
                 </div>
             </div>
         </div>

@@ -185,80 +185,109 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <label>Credentials</label>
             <div class="grouped-inputs">
-                <div class="input-container">
-                    <i class="ri-user-fill input-icon"></i>
-                    <input type="text" name="username" placeholder="Username"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_username_input']) ? $_SESSION['edit_username_input'] : $username); ?>"
-                        maxlength="32" required>
+                <div>
+                    <label for="username" style="display: block; margin-bottom: 5px;">Username</label>
+                    <div class="input-container">
+                        <i class="ri-user-fill input-icon"></i>
+                        <input type="text" id="username" name="username" placeholder="Username"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_username_input']) ? $_SESSION['edit_username_input'] : $username); ?>"
+                            maxlength="32">
+                    </div>
                 </div>
-                <div class="input-container">
-                    <i class="ri-lock-password-fill input-icon"></i>
-                    <input type="password" name="password" placeholder="Password" maxlength="32">
+                <div>
+                    <label for="password" style="display: block; margin-bottom: 5px;">Password</label>
+                    <div class="input-container">
+                        <i class="ri-lock-password-fill input-icon"></i>
+                        <input type="password" id="password" name="password" placeholder="Password" maxlength="32">
+                    </div>
                 </div>
-
-                <div class="input-container">
-                    <i class="ri-lock-password-fill input-icon"></i>
-                    <input type="password" name="confirm-password" placeholder="Confirm Password" maxlength="32">
+                <div>
+                    <label for="confirm-password" style="display: block; margin-bottom: 5px;">Confirm Password</label>
+                    <div class="input-container">
+                        <i class="ri-lock-password-fill input-icon"></i>
+                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm Password" maxlength="32">
+                    </div>
                 </div>
             </div>
 
-            <div class="input-container">
-                <i class="ri-shield-fill input-icon"></i>
-                <?php $selected_role = isset($_SESSION['edit_role_input']) ? $_SESSION['edit_role_input'] : $role; ?>
-                <select style="height: 46px; padding-left: 40px;" name="role">
-                    <option value="none" disabled hidden <?php if ($selected_role == "none" || empty($selected_role))
-                        echo "selected"; ?>>Select Role</option>
-                    <option value="user" <?php if ($selected_role == "user")
-                        echo "selected"; ?>>User</option>
-                    <option value="admin" <?php if ($selected_role == "admin")
-                        echo "selected"; ?>>Admin</option>
-                </select>
+            <div>
+                <label for="role" style="display: block; margin-bottom: 5px;">Role</label>
+                <div class="input-container">
+                    <i class="ri-shield-fill input-icon"></i>
+                    <?php $selected_role = isset($_SESSION['edit_role_input']) ? $_SESSION['edit_role_input'] : $role; ?>
+                    <select style="height: 46px; padding-left: 40px;" id="role" name="role">
+                        <option value="none" disabled hidden <?php if ($selected_role == "none" || empty($selected_role))
+                            echo "selected"; ?>>Select Role</option>
+                        <option value="user" <?php if ($selected_role == "user")
+                            echo "selected"; ?>>User</option>
+                        <option value="admin" <?php if ($selected_role == "admin")
+                            echo "selected"; ?>>Admin</option>
+                    </select>
+                </div>
             </div>
 
             <hr>
 
-            <label>Student ID</label>
-            <div class="input-container">
-                <i class="ri-id-card-line input-icon"></i>
-                <input type="text" name="student-id" placeholder="ID Number"
-                    value="<?php echo htmlspecialchars(isset($_SESSION['edit_student_id_input']) ? $_SESSION['edit_student_id_input'] : $student_id); ?>"
-                    required>
+            <div>
+                <label for="student-id" style="display: block; margin-bottom: 5px;">Student ID</label>
+                <div class="input-container">
+                    <i class="ri-id-card-line input-icon"></i>
+                    <input type="text" id="student-id" name="student-id" placeholder="ID Number"
+                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_student_id_input']) ? $_SESSION['edit_student_id_input'] : $student_id); ?>"
+                       >
+                </div>
             </div>
+
             <label>Full Name</label>
             <div class="grouped-inputs">
-                <div class="input-container">
-                    <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="first-name"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_first_name_input']) ? $_SESSION['edit_first_name_input'] : $first_name); ?>"
-                        placeholder="First" required>
+                <div>
+                    <label for="first-name" style="display: block; margin-bottom: 5px;">First Name</label>
+                    <div class="input-container">
+                        <i class="ri-user-smile-line input-icon"></i>
+                        <input type="text" id="first-name" name="first-name"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_first_name_input']) ? $_SESSION['edit_first_name_input'] : $first_name); ?>"
+                            placeholder="First">
+                    </div>
                 </div>
-                <div class="input-container">
-                    <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="middle-name"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_middle_name_input']) ? $_SESSION['edit_middle_name_input'] : $middle_name); ?>"
-                        placeholder="Middle">
+                <div>
+                    <label for="middle-name" style="display: block; margin-bottom: 5px;">Middle Name</label>
+                    <div class="input-container">
+                        <i class="ri-user-smile-line input-icon"></i>
+                        <input type="text" id="middle-name" name="middle-name"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_middle_name_input']) ? $_SESSION['edit_middle_name_input'] : $middle_name); ?>"
+                            placeholder="Middle">
+                    </div>
                 </div>
-                <div class="input-container">
-                    <i class="ri-user-smile-line input-icon"></i>
-                    <input type="text" name="last-name"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_last_name_input']) ? $_SESSION['edit_last_name_input'] : $last_name); ?>"
-                        placeholder="Last" required>
+                <div>
+                    <label for="last-name" style="display: block; margin-bottom: 5px;">Last Name</label>
+                    <div class="input-container">
+                        <i class="ri-user-smile-line input-icon"></i>
+                        <input type="text" id="last-name" name="last-name"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_last_name_input']) ? $_SESSION['edit_last_name_input'] : $last_name); ?>"
+                            placeholder="Last">
+                    </div>
                 </div>
             </div>
 
             <label>Contact information</label>
             <div class="grouped-inputs">
-                <div class="input-container">
-                    <i class="ri-mail-line input-icon"></i>
-                    <input type="text" name="email"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_email_input']) ? $_SESSION['edit_email_input'] : $email); ?>"
-                        placeholder="Email" required>
+                <div>
+                    <label for="email" style="display: block; margin-bottom: 5px;">Email</label>
+                    <div class="input-container">
+                        <i class="ri-mail-line input-icon"></i>
+                        <input type="text" id="email" name="email"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_email_input']) ? $_SESSION['edit_email_input'] : $email); ?>"
+                            placeholder="Email">
+                    </div>
                 </div>
-                <div class="input-container">
-                    <i class="ri-phone-line input-icon"></i>
-                    <input type="text" name="contact"
-                        value="<?php echo htmlspecialchars(isset($_SESSION['edit_contact_input']) ? $_SESSION['edit_contact_input'] : $contact); ?>"
-                        placeholder="Contact Number" required>
+                <div>
+                    <label for="contact" style="display: block; margin-bottom: 5px;">Contact Number</label>
+                    <div class="input-container">
+                        <i class="ri-phone-line input-icon"></i>
+                        <input type="text" id="contact" name="contact"
+                            value="<?php echo htmlspecialchars(isset($_SESSION['edit_contact_input']) ? $_SESSION['edit_contact_input'] : $contact); ?>"
+                            placeholder="Contact Number">
+                    </div>
                 </div>
             </div>
 

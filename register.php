@@ -1,19 +1,19 @@
 <?php
-require '../database/connection.php';
-include 'validations.php';
+require 'database/connection.php';
+include 'admin/validations.php';
 
 session_start();
 
-if ((!isset($_SESSION["user_id"]) || !isset($_SESSION["user_role"])) || $_SESSION["user_role"] != "Admin") {
-    header("Location: ../error/401.php?ref=login&role=admin");
-    exit();
-}
-
-$successMsg = $errorMsg = "";
+$successMsg = $warningMsg = $errorMsg = "";
 
 if (isset($_SESSION['success_msg'])) {
     $successMsg = $_SESSION['success_msg'];
     unset($_SESSION['success_msg']);
+}
+
+if (isset($_SESSION['warning_message'])) {
+    $errorMsg = $_SESSION['warning_message'];
+    unset($_SESSION['warning_message']);
 }
 
 if (isset($_SESSION['error_msg'])) {
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $username = trim($_POST["username"]);
     $password = trim($_POST["password"]);
     $confirm_password = trim($_POST["confirm-password"]);
-    $role = trim(string: $_POST["role"]);
+    $role = "User";
     $student_id = trim($_POST["student-id"]);
     $first_name = trim($_POST["first-name"]);
     $middle_name = trim($_POST["middle-name"]);
@@ -36,15 +36,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $first_name = ucwords(strtolower($first_name));
     $last_name = ucwords(strtolower($last_name));
 
-    // I'm still conflicted whether to store emails in all lowercase or remain case-sensitive based on actual input.
-    // Either it's only going to be the checking process where the lowercase should be enforced for any unintended duplicates
-    // or I'll store the email as lowercase in the database.
-    // $email = strtolower($email); - if stored as lowercase
-    // strtolower($data["email"]) == $email - if only during checking
-
     $_SESSION["username-input"] = $username;
     $_SESSION["stud-id-input"] = $student_id;
-    $_SESSION["role-input"] = $role;
     $_SESSION["first-name-input"] = $first_name;
     $_SESSION["middle-name-input"] = $middle_name;
     $_SESSION["last-name-input"] = $last_name;
@@ -53,26 +46,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (doesUsernameExist($conn, $username)) {
         $_SESSION['error_msg'] = "Username is already taken.";
-        header("Location: new-account.php");
+        header("Location: register.php");
         exit();
     }
 
     if (doesStudentIDExist($conn, $student_id)) {
         $_SESSION['error_msg'] = "Student ID is already associated with an account.";
-        header("Location: new-account.php");
+        header("Location: register.php");
         exit();
     }
 
     if (doesEmailExist($conn, $email)) {
         $_SESSION['error_msg'] = "Email is already registered with an account.";
-        header("Location: new-account.php");
+        header("Location: register.php");
         exit();
     }
 
     validateAllFieldInputs($username, $password, $confirm_password, $role, $student_id, $first_name, $middle_name, $last_name, $email, $contact);
 
     $image_path = "";
-    $targetDir = "../uploads/documents";
+    $targetDir = "uploads/documents";
 
     $imageFileType = strtolower(pathinfo($_FILES["supporting-document-image"]["name"], PATHINFO_EXTENSION));
 
@@ -91,16 +84,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
-    $verifiedStatus = "Verified";
-
-    $userQuery = "INSERT INTO users (username, password, role, status) VALUES (?, ?, ?, ?)";
+    $userQuery = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
     $userStmt = $conn->prepare($userQuery);
-    $userStmt->bind_param("sss", $username, $hashedPassword, $role, $verifiedStatus);
+    $userStmt->bind_param("sss", $username, $hashedPassword, $role);
 
     if ($userStmt->execute()) {
-        // An easy way instead of manually getting or selecting the ID, unlike in my WPF applications I have to manually
-        // create a new function just to get the ID first before doing an insert query again.
-        // Ref: https://www.w3schools.com/php/php_mysql_insert_lastid.asp
         $user_id = $conn->insert_id;
 
         $studentQuery = "INSERT INTO students (student_id, first_name, middle_name, last_name, email, contact, supporting_document, user_id)
@@ -131,11 +119,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
-        header("Location: new-account.php");
+        header("Location: register.php");
         exit();
     } else {
         $_SESSION["error_msg"] = "Failed to register user: " . $userStmt->error;
-        header(header: "Location: new-account.php");
+        header(header: "Location: register.php");
         exit();
     }
 }
@@ -152,7 +140,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 
 <body class="non-admin-body">
-    <?php require 'sidebar.php' ?>
+    <?php require 'sidebar.php'; ?>
 
     <div class="main-content" style="background-color: #fff; border-radius: 8px;">
         <form action="" method="POST" enctype="multipart/form-data">
@@ -190,23 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             placeholder="Confirm Password" maxlength="32" required>
                     </div>
                 </div>
-            </div>
-            <div>
-                <label for="role" class="form-label">Role <span
-                        style="color: red; font-weight: normal;">*</span></label>
-                <div class="input-container">
-                    <i class="ri-shield-fill input-icon"></i>
-                    <select style="height: 46px; padding-left: 40px;" id="role" name="role" required>
-                        <option value="none" disabled <?php if (empty($_SESSION["role-input"]))
-                            echo "selected"; ?> hidden>
-                            Select Role</option>
-                        <option value="user" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "user")
-                            echo "selected"; ?>>User</option>
-                        <option value="admin" <?php if (!empty($_SESSION["role-input"]) && $_SESSION["role-input"] == "admin")
-                            echo "selected"; ?>>Admin</option>
-                    </select>
-                </div>
-            </div>
+            </div>            
 
             <hr>
 
@@ -270,17 +242,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <label for="supporting-document-image" class="form-label">Supporting Document</label>
                 <div class="input-container">
                     <i class="ri-image-line input-icon"></i>
-                    <input id="supporting-document-image" type="file" name="supporting-document-image" accept="image/*"
-                        required>
+                    <input id="supporting-document-image" name="supporting-document-image" type="file" name="supporting-document-image" accept="image/*" required>
                 </div>
             </div>
 
-            <span class="input-description">Please upload the Student ID or Official Registration Form (ORF)</span>
+            <span class="input-description">Please upload your Student ID or Official Registration Form (ORF)</span>
 
             <div style="text-align: center;">
                 <div style="text-align: center;">
                     <?php if (!empty($successMsg)) { ?>
                         <span class="success-message"><?php echo htmlspecialchars($successMsg); ?></span>
+                    <?php } ?>
+
+                    <?php if (!empty($warningMsg)) { ?>
+                        <span class="warning-message"><?php echo $warningMsg; ?></span>
                     <?php } ?>
 
                     <?php

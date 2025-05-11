@@ -170,9 +170,22 @@ form button:hover {
     transition: color 0.4s ease;
 }
 
+.input-description {
+    color: #666;
+    font-size: 0.90rem;
+    margin: -15px 0 0 0;
+}
+
 .grouped-inputs {
     display: flex; 
     gap: 10px;
+}
+
+label:has(+ div > input:required)::after,
+label:has(+ input:required)::after {
+    content: " *";
+    font-weight: normal;
+    color: red;
 }
 
 /* ===== FOR TABLE ===== */
@@ -385,6 +398,14 @@ th, td {
     color: #d4392e;
 }
 
+.sidebar-menu li.login a { 
+    background-color: #007bff; 
+}
+
+.sidebar-menu li.register a { 
+    background-color: #28a745; 
+    color: white;
+}
 .sidebar-footer {
     padding: 10px;
     text-align: center;

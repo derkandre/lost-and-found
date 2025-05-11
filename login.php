@@ -7,10 +7,6 @@ $successMsg = $errorMsg = $warningMsg = "";
 
 session_start();
 
-if (isset($_SESSION["user_id"]) && isset($_SESSION["user_role"])) {
-    header("Location: " . ($_SESSION["user_role"] == "Admin" ? "admin/" : "dashboard/"));
-}
-
 if (isset($_SESSION['success_msg'])) {
     $successMsg = $_SESSION['success_msg'];
     unset($_SESSION['success_msg']);
@@ -48,29 +44,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($passwordMatch) {
             $_SESSION["user_id"] = encryptData($data["user_id"]);
             $userRole = $_SESSION["user_role"] = $data["role"];
+            $verifiedStatus = $_SESSION["verified_status"] = $data["status"];
 
-            if ($userRole == "Admin") {
+            if ($verifiedStatus == "Unverified") {
+                unset($_SESSION["user_id"]);
+                unset($_SESSION["user_role"]);
+                unset($_SESSION["verified_status"]);
+
+                header("Location: login.php?status=unverified");
+                exit();
+            } else if ($userRole == "Admin") {
                 header("Location: admin/");
                 exit();
             } else {
                 header("Location: dashboard/");
+                exit();
             }
-
         } else {
             $_SESSION['error_msg'] = "Incorrect username or password!";
-            header("Location: ../login.php");
+            header("Location: login.php");
         }
     } else {
         $_SESSION['error_msg'] = "Incorrect username or password!";
-        header("Location: ../login.php");
+        header("Location: login.php");
     }
 }
 
-if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
-    $_SESSION['success_msg'] = "You have been logged out successfully!";
-    header("Location: ../login.php");
-    exit;
+if (isset($_GET["status"]) && $_GET["status"] === "unverified") {
+    $warningMsg = "Your account is currently <b>unverified</b>. You will recieve an email once the admin has verified and approved your registration. Kindly check your email regularly.";
 }
+
+if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
+    $successMsg = "You have been logged out successfully!";
+}
+
 ?>
 
 <html>
@@ -103,7 +110,7 @@ if (isset($_GET["ref"]) && $_GET["ref"] === "logout") {
             <button type="submit">Login</button>
             <p class="form-additional-links"><a class="form-additional-links" href="../error/401.php?ref=login">Forgot
                     Password</a> |
-                <a class="form-additional-links" href="signup.php">Register</a>
+                <a class="form-additional-links" href="register.php">Register</a>
             </p>
             <?php if (!empty($successMsg)): ?>
                 <span class="success-message"><?php echo $successMsg; ?></span>

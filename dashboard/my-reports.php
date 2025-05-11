@@ -11,6 +11,16 @@ if (!isset($_SESSION["user_id"]) || $_SESSION["user_role"] !== "User") {
     exit();
 }
 
+if (isset($_SESSION["verified_status"])) {
+    if ($_SESSION["verified_status"] == "Unverified") {
+        $_SESSION["warning-message"] = "Your account is currently <br>unverified</b>. You will recieve an email once the admin has verified and approved your registration.";
+        header("Location: ../login.php?status=unverified");
+        exit();
+    }
+
+    $_SESSION["verified_status"] = "Verified";
+}
+
 $userId = decryptData($_SESSION["user_id"]);
 
 $successMsg = $errorMsg = "";
